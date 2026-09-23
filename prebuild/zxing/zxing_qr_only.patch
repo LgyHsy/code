@@ -1,0 +1,76 @@
+--- a/core/CMakeLists.txt
++++ b/core/CMakeLists.txt
+@@ -407,6 +407,15 @@
+     src/libzueci/zueci.h
+ )
+ 
++# Optional aggressive size profile for embedded use-cases that only decode QR.
++if (DEFINED ZXING_FORCE_QR_ONLY AND ZXING_FORCE_QR_ONLY)
++    set (AZTEC_FILES)
++    set (DATAMATRIX_FILES)
++    set (MAXICODE_FILES)
++    set (ONED_FILES)
++    set (PDF417_FILES)
++endif()
++
+ if (NOT BUILD_READERS)
+     set_source_files_properties(src/libzueci/zueci.c PROPERTIES COMPILE_FLAGS -DZUECI_EMBED_NO_TO_UTF)
+ endif()
+--- a/core/src/MultiFormatReader.cpp
++++ b/core/src/MultiFormatReader.cpp
+@@ -9,11 +9,6 @@
+ #include "BarcodeFormat.h"
+ #include "BinaryBitmap.h"
+ #include "DecodeHints.h"
+-#include "aztec/AZReader.h"
+-#include "datamatrix/DMReader.h"
+-#include "maxicode/MCReader.h"
+-#include "oned/ODReader.h"
+-#include "pdf417/PDFReader.h"
+ #include "qrcode/QRReader.h"
+ 
+ #include <memory>
+@@ -24,24 +19,9 @@
+ {
+ 	auto formats = hints.formats().empty() ? BarcodeFormat::Any : hints.formats();
+ 
+-	// Put linear readers upfront in "normal" mode
+-	if (formats.testFlags(BarcodeFormat::LinearCodes) && !hints.tryHarder())
+-		_readers.emplace_back(new OneD::Reader(hints));
+-
+ 	if (formats.testFlags(BarcodeFormat::QRCode | BarcodeFormat::MicroQRCode))
+ 		_readers.emplace_back(new QRCode::Reader(hints, true));
+-	if (formats.testFlag(BarcodeFormat::DataMatrix))
+-		_readers.emplace_back(new DataMatrix::Reader(hints, true));
+-	if (formats.testFlag(BarcodeFormat::Aztec))
+-		_readers.emplace_back(new Aztec::Reader(hints, true));
+-	if (formats.testFlag(BarcodeFormat::PDF417))
+-		_readers.emplace_back(new Pdf417::Reader(hints));
+-	if (formats.testFlag(BarcodeFormat::MaxiCode))
+-		_readers.emplace_back(new MaxiCode::Reader(hints));
+-
+-	// At end in "try harder" mode
+-	if (formats.testFlags(BarcodeFormat::LinearCodes) && hints.tryHarder())
+-		_readers.emplace_back(new OneD::Reader(hints));
++	// QR-only build: linear/other matrix readers are intentionally excluded.
+ }
+ 
+ MultiFormatReader::~MultiFormatReader() = default;
+--- a/core/src/DecodeHints.h
++++ b/core/src/DecodeHints.h
+@@ -59,10 +59,11 @@
+ 	bool _returnCodabarStartEnd    : 1;
+ 	bool _returnErrors             : 1;
+ 	uint8_t _downscaleFactor       : 3;
+-	EanAddOnSymbol _eanAddOnSymbol : 2;
+-	Binarizer _binarizer           : 2;
+-	TextMode _textMode             : 3;
+-	CharacterSet _characterSet     : 6;
++	// Use full enum storage width to avoid compiler warnings about enum bit-fields.
++	EanAddOnSymbol _eanAddOnSymbol : 8;
++	Binarizer _binarizer           : 8;
++	TextMode _textMode             : 8;
++	CharacterSet _characterSet     : 8;
+ 
+ 	uint8_t _minLineCount        = 2;
+ 	uint8_t _maxNumberOfSymbols  = 0xff;

@@ -1,0 +1,7 @@
+#ifndef ANJREC_VERSION_H
+#define ANJREC_VERSION_H
+
+#define ANJREC_APP_VERSION     "V0.0.0.1"
+#define ANJREC_BUILD_TIME      "@ANJREC_BUILD_TIME@"
+
+#endif

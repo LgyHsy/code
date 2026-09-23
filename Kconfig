@@ -1,0 +1,494 @@
+# 项目名称选择
+choice
+    prompt "Project Selection"
+    default MYF30
+
+config MYF30
+    bool "MYF30"
+    help
+        Select MYF30 Project.
+
+config MYQ12
+    bool "MYQ12"
+    help
+        Select MYQ12 Project.
+
+config MYF31H
+    bool "MYF31H"
+    help
+        Select MYF31H Project.
+
+config D72W
+    bool "D72W"
+    help
+        Select D72W Project.
+
+config TCL12Q
+    bool "TCL12Q"
+    help
+        Select TCL12Q Project.
+
+config TCA55
+    bool "TCA55"
+    help
+        Select TCA55 Project.
+
+config TYE40H
+    bool "TYE40H"
+    help
+        Select TYE40H Project.
+endchoice
+
+config BUILD_PROJECT_NAME
+    string
+    default "MYF30" if MYF30
+    default "MYQ12" if MYQ12
+    default "MYF31H" if MYF31H
+    default "D72W" if D72W
+    default "TCL12Q" if TCL12Q
+    default "TCA55" if TCA55
+    default "TYE40H" if TYE40H
+
+# 调试选项
+config DEBUG
+    bool "Enable Debug"
+    default n                                                                              
+    help
+        Enable debug output and features.
+
+config PQTOOL
+    bool "Enable PQ Tool mode"
+    default n
+    help
+        Skip ispctl overlay of brightness/contrast/AE so PQTOOL can tune ISP.
+        Soft-photosensor day/night PQ bin switch still works.
+
+# 模块配置
+menu "Module Configuration"
+
+config MODULE_PTZ
+    bool "Enable PTZ"
+    default y
+    help
+        Enable PTZ functionality.
+
+    if MODULE_PTZ
+        choice
+            prompt "PTZ Control Method"
+            optional
+            help
+                Select the PTZ control method (mutually exclusive)
+            config MODULE_PTZ_DRV
+                bool "PTZ DRV Control"
+                help
+                    Enable core PTZ drv control
+
+            config MODULE_PTZ_PWM
+                bool "PTZ PWM Control"
+                help
+                    Enable core PTZ PWM control
+
+            config MODULE_PTZ_IIC
+                bool "PTZ IIC Control"
+                help
+                    Enable core PTZ IIC control
+        endchoice
+    endif
+
+config MODULE_SDCARD
+    bool "Enable SD Card"
+    default y
+    help
+        Enable SD card functionality.
+
+choice
+    prompt "Flash Type"
+    default FLASH_TYPE_NOR
+    help
+        Select SPI NOR or SPI NAND flash layout.
+
+    config FLASH_TYPE_NOR
+        bool "SPI NOR"
+
+    config FLASH_TYPE_NAND
+        bool "SPI NAND"
+endchoice
+
+config MODULE_NFS
+    bool "Enable NFS Network Storage"
+    default n
+    help
+        Enable NFS network storage recording.
+
+config MODULE_MCU
+    bool "Enable MCU"
+    default n
+    help
+        Enable mcu functionality.
+
+config MODULE_AOV
+    bool "Enable AOV"
+    default n
+    help
+        Enable aov functionality.
+
+config MODULE_ZXING
+    bool "Enable ZXING"
+    default y
+    help
+        Enable ZXING functionality.
+
+config MODULE_WAVE
+    bool "Enable WAVE"
+    default y
+    help
+        Enable WAVE functionality.
+
+config MODULE_BATTERY
+    bool "Enable Battery"
+    default y
+    help
+        Enable Battery functionality.
+
+config MODULE_GYRO
+    bool "Enable Gyro"
+    default n
+    help
+        Enable gyro functionality.
+
+    if MODULE_GYRO
+        choice
+            prompt "Gyro Sensor Chip"
+            default MODULE_GYRO_ICM42607P
+            help
+                Select the gyro sensor chip driver (mutually exclusive)
+
+            config MODULE_GYRO_ICM42607P
+                bool "ICM42607P"
+                help
+                    Enable ICM42607P gyro/accel sensor driver
+        endchoice
+    endif
+
+config MODULE_BLUETOOTH
+    bool "Enable Bluetooth"
+    default n
+    help
+        Enable Bluetooth functionality.
+
+# media子菜单
+menu "media Options"
+config MODULE_MEDIA_AUDIO
+    bool "Enable Audio"
+    default y
+    help
+        Enable audio.
+    if MODULE_MEDIA_AUDIO  # 仅当启用AUDIO时显示
+    config MODULE_MEDIA_MP3
+        bool "Enable MP3 Support"
+        default y
+        help
+            Add MP3 decoding support to audio module.
+
+    config MODULE_MEDIA_AAC
+        bool "Enable AAC Support"
+        default y
+        help
+            Add AAC decoding support to audio module.
+	
+    config MODULE_AUDIO_ALGO_AEC
+        bool "Enable Algo AEC Support"
+        default y
+        help
+            Add AEC Algo support to audio module.
+
+	endif
+
+config MODULE_MEDIA_OSD
+    bool "Enable OSD"
+    default y
+    help
+        Enable osd.
+endmenu
+
+# Snap 抓拍：软编/硬编互斥，可不选
+choice
+    prompt "Snap Encode Method"
+    optional
+    default MODULE_SNAP_SOFT
+    help
+        Soft and hard JPEG snap are mutually exclusive. Leave unset to disable snap.
+
+    config MODULE_SNAP_SOFT
+        bool "Soft JPEG (libjpeg)"
+        help
+            Soft encode via libjpeg from YUV.
+
+    config MODULE_SNAP_HARD
+        bool "Hard JPEG (VENC)"
+        depends on ts_5326
+        help
+            Hard encode via SoC VENC JPEG.
+endchoice
+
+# Smart菜单
+config MODULE_SMART
+    bool "Enable Smart"
+    default y
+    help
+        Enable Smart.
+
+    if MODULE_SMART
+    config MODULE_SMART_MD
+        bool "Enable Smart Md"
+        default y
+        help
+            Add motion detect.
+
+    config MODULE_SMART_PD
+        bool "Enable Smart Pd"
+        default y
+        help
+            Add person detect.
+
+    config MODULE_SMART_FD
+        bool "Enable Smart Fd"
+        depends on ts_5326
+        default n
+        help
+            Add face detect (ts_5326 only).
+
+    config MODULE_SMART_PVD
+        bool "Enable Smart Pvd"
+        depends on ts_5326
+        default n
+        help
+            Add person/vehicle/non-motor detect (PVD via algmod8c, replaces bodydetect PD on ts_5326).
+    endif
+
+# Service子菜单
+menu "Service Options"
+config MODULE_SREVICE_28181
+    bool "Enable 28181 Protocol"
+    default n
+    help
+        Enable GB/T 28181 protocol support.
+
+config MODULE_SREVICE_ONVIF
+    bool "Enable ONVIF Protocol"
+    default y
+    help
+        Enable ONVIF protocol support.
+
+    if MODULE_SREVICE_ONVIF
+    choice
+        prompt "ONVIF Version"
+        default ONVIF_VERSION_SIMPLE
+        help
+            Select ONVIF protocol version.
+
+    config ONVIF_VERSION_SIMPLE
+        bool "Simple Version"
+        help
+            Enable simple ONVIF protocol with basic functions.
+
+    config ONVIF_VERSION_FULL
+        bool "Full Version"
+        help
+            Enable full ONVIF protocol with all functions.
+
+    endchoice
+    endif
+
+config MODULE_SREVICE_HIK
+    bool "Enable Hikvision Private Protocol (SADP + cmd port)"
+    default n
+    help
+        Enable in-process Hikvision NVR docking (SADP discovery and private command port).
+        RTSP streaming reuses MODULE_SREVICE_RTSP_LITE / RTSP.
+
+config MODULE_SREVICE_RTSP_ENABLE
+    bool "Enable RTSP Protocol"
+    default n
+    help
+        Enable RTSP protocol and choose one protocol implementation.
+
+if MODULE_SREVICE_RTSP_ENABLE
+    choice
+        prompt "RTSP Protocol"
+        default MODULE_SREVICE_RTSP_LITE
+        help
+            Select exactly one RTSP protocol implementation.
+
+    config MODULE_SREVICE_RTSP
+        bool "Enable RTSP Protocol"
+        help
+            Enable RTSP protocol support.
+
+    config MODULE_SREVICE_RTSP_LITE
+        bool "Enable RTSP_LITE Protocol"
+        help
+            Enable RTSP_LITE protocol support.
+            RTSP_LITE (vs RTSP): 
+              anjcam: -192408 bytes    
+              MemAvailable: +240 KB    
+              rootfs.sqfs: -98304 bytes
+
+    endchoice
+endif
+
+config MODULE_SREVICE_ANJSER
+    bool "Enable ANJ Service"
+    default y
+    help
+        Enable ANJ Service support.
+    if MODULE_SREVICE_ANJSER
+    choice
+        prompt "ANJ Service Type"
+        default AIOT_SERVER
+        
+        config AIOT_SERVER
+            bool "Enable AIOT Server"
+            help
+                Enable AIOT Server support.
+        config ALI_SERVER
+            bool "Enable ALI Server"
+            help
+                Enable ALI Server support.
+    endchoice
+
+    config MODULE_CLOUD_STORAGE
+        bool "Enable Cloud Storage"
+        default n
+        depends on MODULE_SREVICE_ANJSER
+        help
+            Enable Cloud Storage functionality.
+    
+    if MODULE_CLOUD_STORAGE
+        choice
+            prompt "Cloud Storage Type"
+            default AIOT_CLOUD_STORAGE
+            help
+                Select cloud storage service type
+
+            config CT_CLOUD_STORAGE
+                bool "CT Cloud Storage"
+                help
+                    Enable CT Cloud Storage service.
+
+            config AIOT_CLOUD_STORAGE
+                bool "AIOT Cloud Storage"
+                help
+                    Enable AIOT Cloud Storage service.
+        endchoice
+    endif
+    endif
+
+config MODULE_SREVICE_ANJWEB
+    bool "Enable ANJ WEB"
+    default n
+    help
+        Enable ANJ Web support.
+
+config MODULE_SREVICE_H5LIVE
+    bool "Enable H5 Live WebSocket Preview"
+    default n
+    help
+        Enable H5 WebSocket live preview and playback service.
+
+config MODULE_SREVICE_RTMP
+    bool "Enable RTMP Publish Service"
+    default n
+    help
+        Enable RTMP push streaming service in single-process mode.
+
+config MODULE_SERVICE_HTTP
+    bool "Enable HTTP Service"
+    default n
+    help
+        Enable HTTP server for web interface and APIs.
+
+config MODULE_SERVICE_FTPEMAIL
+    bool "Enable FTP/Email Service"
+    default n
+    help
+        Enable FTP and email file upload service.
+
+# 自动启用机制
+config MODULE_SERVICE_HTTP_AUTO
+    bool
+    default y if ONVIF_VERSION_FULL || MODULE_SREVICE_ANJWEB
+    select MODULE_SERVICE_HTTP
+
+endmenu
+
+# Net子菜单
+menu "Net Options"
+config MODULE_NET_WIRE
+    bool "Enable WIRE"
+    default y
+    help
+        Enable WIRE support.
+
+config MODULE_NET_WIFI
+    bool "Enable WIFI"
+    default n
+    help
+        Enable WIFI support.
+
+config MODULE_NET_4G
+    bool "Enable 4G"
+    default n
+    help
+        Enable 4G support.
+endmenu
+endmenu
+# PLATFORMS选择
+choice
+    prompt "Platforms Selection"
+    default mstar_i6c
+
+config mstar_i6c
+    bool "mstar_i6c"
+    help
+        Select mstar_i6c platform.
+
+config mstar_ifliegen
+    bool "mstar_ifliegen"
+    help
+        Select mstar_ifliegen platform.
+
+config ts_5326
+    bool "ts_5326"
+    help
+        Select ts_5326 platform.
+endchoice
+
+config BUILD_PLATFORMS_NAME
+    string
+    default "mstar_i6c" if mstar_i6c
+    default "mstar_ifliegen" if mstar_ifliegen
+    default "ts_5326" if ts_5326
+
+config BUILD_PROJECT_SDK_PATH
+    string "Project SDK path"
+    default "../build/MYF30/release/project" if mstar_i6c
+
+config BUILD_COMPILER
+    string "COMPILER"
+    default "arm-sigmastar-linux-uclibcgnueabihf-" if mstar_i6c
+    default "arm-linaro-linux-uclibcgnueabihf-" if mstar_i6c
+    default "arm-ts-linux-uclibcgnueabihf-" if ts_5326
+
+config SDK_LIBS_STATIC
+    bool "Static Link SDK Libs"
+    default y
+    help
+        Enable Static Link SDK Libs.
+
+config TS_SENSOR
+    string "TS ISP sensor lib set"
+    depends on ts_5326
+    default "os05a20"
+    help
+        Name of middleware/platforms/ts_5326/sensors/<name>.cmake.
